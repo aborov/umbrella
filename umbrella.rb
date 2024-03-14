@@ -22,7 +22,7 @@ require "json"
       lng = lat_lng['lng']
       puts "Your coordinates are #{lat}, #{lng}"
     else
-      puts "Sorry, we can't get your location coordinates. Try later."
+      puts "Sorry, we can't get your location coordinates at the moment. Try later."
       exit
     end
   
@@ -43,26 +43,28 @@ require "json"
   degree_sign = "\u00B0"
   puts "Right now, it's #{current_temp}#{degree_sign}F outside."
   
-# give hourly
+# give next hour
   summary = pirate_parsed['hourly']['summary']
   puts "In the next hour, it's going to be: #{summary}"
 
-# next 12 hours
+# give next 12 hours
   puts "Forecast for the next 12 hours:"
   current_time = Time.now
-  hourly_forecast.first(12).each do |hour_data|
+  current_hour_index = hourly_forecast.index { |hour_data| Time.at(hour_data['time']).hour == current_time.hour }
+  forecast_12_hours = hourly_forecast[current_hour_index, 13]
+  forecast_12_hours.shift
+  forecast_12_hours.each_with_index do |hour_data, index|
     forecast_time = Time.at(hour_data['time'])
     hours_from_now = ((forecast_time - current_time) / 3600).round
     precipitation_probability = hour_data['precipProbability']
-      if precipitation_probability > 0.1
-        puts "In #{hours_from_now} hours, there is a #{(precipitation_probability * 100).round}% chance of precipitation."
-      end 
+    if precipitation_probability > 0.1
+      puts "In #{hours_from_now} hours, there is a #{(precipitation_probability * 100).round}% chance of precipitation."
+    end
   end
 
-#umbrella advice  
-  if hourly_forecast.any? { |hour_data| hour_data['precipProbability'] > 0.1 }
+# umbrella advice  
+  if forecast_12_hours.any? { |hour_data| hour_data['precipProbability'] > 0.1 }
     puts "You might want to carry an umbrella!"
   else
     puts "You probably won’t need an umbrella today."
   end
-  
